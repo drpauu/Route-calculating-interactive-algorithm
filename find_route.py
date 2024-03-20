@@ -4,6 +4,10 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import heapq
+import scipy as sp
+from graphviz import Graph
+from pyvis.network import Network
+
         
 def read_file(filename: str = "input1.txt") -> dict:
     
@@ -66,52 +70,37 @@ def uniform_cost_search(adjacency_list: dict, origin: str, destination: str) -> 
     # If the destination node is not reached, return an empty path
     return []
 
-def plot_graph(adjacency_list: dict, path: list = [], random_seed: int = 0):
-    '''
-    Takes an adjacency list as input.
-    Draws a graph of nodes and their connections.
-    '''
-    
-    np.random.seed(random_seed)
-    
-    # Create a new graph object
-    G = nx.Graph()
-    
-    # Add nodes to the graph
-    nodes = list(adjacency_list.keys())
-    G.add_nodes_from(nodes)
-    
-    # Add edges to the graph
-    for node, connections in adjacency_list.items():
-        for connection in connections:
-            G.add_edge(node, connection[0], weight=connection[1], inverse_weight=1/connection[1])
-    
-    # Get the positions of the nodes in the graph
-    pos = nx.layout.spring_layout(G, k=0.1, iterations=50, scale=7, weight='inverse_weight')
-    
-    # Draw the nodes
-    nx.draw_networkx_nodes(G, pos, node_color='lightblue', node_size=50)
-    
-    # Draw the edges
-    edges = G.edges()
-    weights = [G[u][v]['weight'] for u, v in edges]
-    
-    # Draw edges in path in red
-    path_edges = [(path[i], path[i+1]) for i in range(len(path)-1)]
-    path_edges = [(u, v) for (u, v) in path_edges if G.has_edge(u, v)]
-    
-    nx.draw_networkx_edges(G, pos, edgelist=path_edges, width=3, edge_color='red')
-    nx.draw_networkx_edges(G, pos, edgelist=set(edges) - set(path_edges), width=1, edge_color='gray')
-    
-    # Draw the labels
-    nx.draw_networkx_labels(G, pos, font_size=5, font_family='sans-serif')
-    
-    # Add a title and display the graph
-    plt.title("Dades sintètiques - Graf de les ciutats d'Espanya")
-    plt.axis('off')
-    plt.show()
 
+def plot_graph(adjacency_list: dict, path: list = []):
+    # Especifica cdn_resources='in_line' para incrustar los recursos directamente
+    # o cdn_resources='remote' para cargar desde una CDN
+    net = Network(notebook=True, height="750px", width="100%", cdn_resources='in_line')
     
+    # Agrega los nodos al grafo
+    for node in adjacency_list.keys():
+        net.add_node(node, label=node, title=node)
+
+    # Agrega las aristas al grafo
+    for node, connections in adjacency_list.items():
+        for connection, weight in connections:
+            net.add_edge(node, connection, label=str(weight), title=str(weight))
+
+    # Resalta los nodos y aristas en la ruta
+    if path:
+        for node in path:
+            net.get_node(node)["color"] = "green"
+        for i in range(len(path) - 1):
+            from_node = path[i]
+            to_node = path[i + 1]
+            for edge in net.edges:
+                if edge["from"] == from_node and edge["to"] == to_node or edge["from"] == to_node and edge["to"] == from_node:
+                    edge["color"] = "red"
+                    break
+
+    # Genera y muestra el grafo
+    net.show("graph.html")
+
+ 
 def output_path(adjacency_list: dict, path: list):
     # Compute the cost of the path
     distance = 0
@@ -214,6 +203,7 @@ def user_decide_next_move(adjacency_list: dict, origin: str, destination: str, o
                 new_path = uniform_cost_search(adjacency_list, next_destination, destination)
                 if new_path:
                     print("Ruta recalculada hacia el destino final:", " -> ".join(new_path))
+                    plot_graph(adjacency_list, path=new_path)
                     optimal_path = new_path  # Actualizar la ruta óptima con la nueva ruta
                     current_path_index = 0  # Resetear el índice de la ruta óptima
                 else:
@@ -233,11 +223,12 @@ def main():
     
     filename = "inputs/espanya.txt"
     adjacency_list = read_file(filename)
-
+    
     print("Calculando la ruta óptima...")
     optimal_path = uniform_cost_search(adjacency_list, origin, destination)
     if optimal_path:
         print(f"La ruta óptima teórica desde {origin} hasta {destination} es: {' -> '.join(optimal_path)}")
+        plot_graph(adjacency_list, path=optimal_path)
     else:
         print("No se encontró una ruta óptima.")
         return
