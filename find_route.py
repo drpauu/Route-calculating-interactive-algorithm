@@ -4,16 +4,6 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import heapq
-
-def command_line_inputs():
-    try:
-        filename = sys.argv[1]
-        origin = sys.argv[2]
-        destination = sys.argv[3]
-        return filename, origin, destination
-    except IndexError:
-        print('Usage: python main.py filename origin destination')
-        sys.exit(1)
         
 def read_file(filename: str = "input1.txt") -> dict:
     
@@ -117,7 +107,7 @@ def plot_graph(adjacency_list: dict, path: list = [], random_seed: int = 0):
     nx.draw_networkx_labels(G, pos, font_size=5, font_family='sans-serif')
     
     # Add a title and display the graph
-    plt.title("Standard Mode Uniform-Cost Search")
+    plt.title("Dades sintètiques - Graf de les ciutats d'Espanya")
     plt.axis('off')
     plt.show()
 
@@ -164,20 +154,95 @@ def output_path(adjacency_list: dict, path: list):
         
         print(f"{node} to {path[i+1]}, {dist} km")
 
-def main():
-    # Clear the terminal
-    os.system('cls' if os.name == 'nt' else 'clear')
-    
-    filename, origin, destination = command_line_inputs()
-    
-    adjacency_list: dict = read_file(filename)
-    
-    solution_path = uniform_cost_search(adjacency_list, origin, destination)
-    
-    output_path(adjacency_list, solution_path)
-    plot_graph(adjacency_list, path=solution_path)
-    
 
+def show_next_and_possible_moves(adjacency_list: dict, origin: str):
+    """
+    Muestra el siguiente movimiento recomendado y los movimientos posibles desde la ciudad de origen.
+    
+    :param adjacency_list: El diccionario de adyacencia que representa el grafo.
+    :param origin: La ciudad de origen desde donde se calculan los movimientos.
+    """
+    if origin in adjacency_list:
+        possible_moves = adjacency_list[origin]
+        print(f"Desde {origin}, los movimientos posibles son:")
+        for move in possible_moves:
+            destination, distance = move
+            print(f"  - A {destination} con una distancia de {distance} km")
+    else:
+        print(f"No se encontraron movimientos posibles desde {origin}.")
+
+
+def user_decide_next_move(adjacency_list: dict, origin: str, destination: str, optimal_path):
+    """
+    Permite al usuario decidir el siguiente destino de los movimientos posibles. Si el usuario elige el movimiento
+    correcto según la ruta óptima, no se recalcula la ruta. De lo contrario, se muestra la ruta recalculada hacia
+    el destino final y el siguiente movimiento recomendado.
+    
+    :param adjacency_list: El diccionario de adyacencia que representa el grafo.
+    :param origin: La ciudad de origen desde donde se calculan los movimientos.
+    :param destination: El destino final deseado.
+    :param optimal_path: La ruta óptima previamente calculada desde el origen hasta el destino.
+    """
+    current_origin = origin
+    current_path_index = 0  # Índice del origen actual en la ruta óptima
+
+    while current_origin != destination:
+        if current_origin in adjacency_list:
+            possible_moves = adjacency_list[current_origin]
+            print(f"\nTu siguiente movimiento debería ser: {optimal_path[current_path_index + 1]}")
+            print(f"\nDesde {current_origin}, los movimientos posibles son:")
+            for i, move in enumerate(possible_moves, start=1):
+                next_destination, distance = move
+                print(f"{i}. A {next_destination} con una distancia de {distance} km")
+
+            choice = int(input("Elige tu próximo destino (número): ")) - 1
+            if 0 <= choice < len(possible_moves):
+                next_destination, _ = possible_moves[choice]
+                print(f"\nHas elegido ir a {next_destination}.")
+
+                # Verificar si la elección coincide con el próximo paso en la ruta óptima
+                if next_destination == optimal_path[current_path_index + 1]:
+                    print("Has elegido el movimiento correcto según la ruta óptima.")
+                    current_origin = next_destination
+                    current_path_index += 1
+                    if current_origin == destination:
+                        print("Has llegado a tu destino final.")
+                        return
+                    continue
+                
+                # Recalcular la ruta si la elección no es el próximo paso en la ruta óptima
+                new_path = uniform_cost_search(adjacency_list, next_destination, destination)
+                if new_path:
+                    print("Ruta recalculada hacia el destino final:", " -> ".join(new_path))
+                    optimal_path = new_path  # Actualizar la ruta óptima con la nueva ruta
+                    current_path_index = 0  # Resetear el índice de la ruta óptima
+                else:
+                    print("No se pudo encontrar una ruta desde tu ubicación actual hasta el destino final.")
+                    return
+                current_origin = next_destination
+            else:
+                print("Opción no válida, intenta de nuevo.")
+        else:
+            print(f"No se encontraron movimientos posibles desde {current_origin}.")
+            return
+
+def main():
+    os.system('cls' if os.name == 'nt' else 'clear')
+    origin = str(input("Escribe la ciudad origen: "))
+    destination = str(input("Escribe la ciudad destino: "))
+    
+    filename = "inputs/espanya.txt"
+    adjacency_list = read_file(filename)
+
+    print("Calculando la ruta óptima...")
+    optimal_path = uniform_cost_search(adjacency_list, origin, destination)
+    if optimal_path:
+        print(f"La ruta óptima teórica desde {origin} hasta {destination} es: {' -> '.join(optimal_path)}")
+    else:
+        print("No se encontró una ruta óptima.")
+        return
+
+    user_decide_next_move(adjacency_list, origin, destination, optimal_path)
 
 if __name__ == '__main__':
     main()
