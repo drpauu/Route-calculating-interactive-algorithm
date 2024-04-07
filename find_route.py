@@ -100,49 +100,6 @@ def plot_graph(adjacency_list: dict, path: list = []):
     # Genera y muestra el grafo
     net.show("graph.html")
 
- 
-def output_path(adjacency_list: dict, path: list):
-    # Compute the cost of the path
-    distance = 0
-    for i, node in enumerate(path):
-        
-        if i == len(path) - 1:
-            break
-        
-        connections = adjacency_list[node]
-        for connection in connections:
-            name = connection[0]
-            if name == path[i+1]:
-                distance += connection[1]
-                break
-        
-    if len(path) == 0:
-        print("distance: infinity")
-        print("route:")
-        print("none")
-        return
-        
-    print(f"distance: {distance} km")
-    print("route:")
-    
-    if len(path) == 1:
-        print(f"{path[0]} to {path[0]}, 0 km")
-        return
-    
-    for i, node in enumerate(path):
-        if i == len(path) - 1:
-            break
-        
-        connections = adjacency_list[node]
-        dist = 0
-        for connection in connections:
-            name = connection[0]
-            if name == path[i+1]:
-                dist = connection[1]
-                break
-        
-        print(f"{node} to {path[i+1]}, {dist} km")
-
 
 def show_next_and_possible_moves(adjacency_list: dict, origin: str):
     """
