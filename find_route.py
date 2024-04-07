@@ -1,3 +1,4 @@
+# Importación de módulos necesarios para el manejo de archivos, graficación, manejo de grafos, y cálculos numéricos
 import os
 import sys
 import matplotlib.pyplot as plt
@@ -8,28 +9,32 @@ import scipy as sp
 from graphviz import Graph
 from pyvis.network import Network
 
-        
 def read_file(filename: str = "input1.txt") -> dict:
-    
     '''
-    Takes a file as input. 
-    Each line denotes two nodes and their connection weight.
+    Lee un archivo de texto que describe un grafo y lo convierte en un diccionario de adyacencia.
     
-    Return a dictionary of nodes and their connections and weights.
+    Cada línea del archivo debe contener dos nodos y el peso de la conexión entre ellos.
+    El archivo puede terminar con una línea "END OF INPUT" para indicar el fin de las entradas.
+    
+    Parámetros:
+    - filename: Ruta al archivo de entrada.
+    
+    Retorna:
+    - Un diccionario donde cada clave es un nodo y su valor es una lista de tuplas, cada tupla contiene un nodo adyacente y el peso de la arista.
     '''
     
-    adjacency_list = {}
+    adjacency_list = {}  # Inicialización del diccionario de adyacencia
     
-    with open(filename, 'r') as f:
-        lines = f.readlines()
-        for line in lines:
-            if line.strip() != 'END OF INPUT':
-                line = line.strip().split()
-                if len(line) == 0: continue
+    with open(filename, 'r') as f:  # Apertura del archivo en modo lectura
+        lines = f.readlines()  # Lectura de todas las líneas del archivo
+        for line in lines:  # Iteración sobre cada línea
+            if line.strip() != 'END OF INPUT':  # Verificación de la línea especial de fin de entrada
+                line = line.strip().split()  # División de la línea en partes
+                if len(line) == 0: continue  # Ignora líneas vacías
                 
-                pointA, pointB, weight = line
+                pointA, pointB, weight = line  # Desempaquetado de los elementos de la línea
                 
-                # Update the dictionary bidirectionally
+                # Actualización del diccionario de adyacencia para ambos nodos, asegurando que la conexión sea bidireccional
                 if pointA not in adjacency_list:
                     adjacency_list[pointA] = [(pointB, int(weight))]
                 else:
@@ -43,154 +48,96 @@ def read_file(filename: str = "input1.txt") -> dict:
     return adjacency_list
 
 def uniform_cost_search(adjacency_list: dict, origin: str, destination: str) -> list:
-    # Initialize priority queue with the starting node and a cost of 0
-    pq = [(0, origin, [origin])]
-    # Initialize visited set
-    visited = set()
+    '''
+    Implementa el algoritmo de búsqueda de costo uniforme (UCS) para encontrar la ruta más corta entre dos nodos.
+    
+    Utiliza una cola de prioridad para explorar los nodos en orden de su costo de ruta acumulado desde el origen,
+    asegurando que la primera ruta completa encontrada al nodo destino es la más corta.
+    
+    Parámetros:
+    - adjacency_list: El diccionario de adyacencia del grafo.
+    - origin: El nodo de origen.
+    - destination: El nodo de destino.
+    
+    Retorna:
+    - Una lista de nodos representando la ruta óptima desde el origen hasta el destino, o una lista vacía si no se encuentra tal ruta.
+    '''
+    pq = [(0, origin, [origin])]  # Inicialización de la cola de prioridad con el nodo de origen
+    visited = set()  # Conjunto para llevar registro de los nodos visitados
 
     while pq:
-        # Remove node with smallest cost from priority queue
-        cost, node, path = heapq.heappop(pq)
+        cost, node, path = heapq.heappop(pq)  # Extracción del nodo con menor costo acumulado
 
         if node == destination:
-            # If the destination node is reached, return the path from the origin node to the destination node
-            return path
+            return path  # Retorno de la ruta si se alcanza el destino
 
         if node not in visited:
-            # Mark node as visited
-            visited.add(node)
-            # Add neighbors to priority queue with their corresponding costs
-            for neighbor, weight in adjacency_list[node]:
+            visited.add(node)  # Marcación del nodo como visitado
+            for neighbor, weight in adjacency_list[node]:  # Exploración de vecinos
                 if neighbor not in visited:
-                    # Compute cost of neighbor as the sum of the cost of the current node and the weight of the edge between the current node and the neighbor
-                    neighbor_cost = cost + weight
-                    # Add neighbor to priority queue with its corresponding cost and path
-                    heapq.heappush(pq, (neighbor_cost, neighbor, path + [neighbor]))
+                    neighbor_cost = cost + weight  # Cálculo del nuevo costo acumulado
+                    heapq.heappush(pq, (neighbor_cost, neighbor, path + [neighbor]))  # Añadir vecino a la cola de prioridad
 
-    # If the destination node is not reached, return an empty path
-    return []
-
+    return []  # Retorno de una lista vacía si no se encuentra una ruta al destino
 
 def plot_graph(adjacency_list: dict, path: list = []):
-    # Especifica cdn_resources='in_line' para incrustar los recursos directamente
-    # o cdn_resources='remote' para cargar desde una CDN
+    '''
+    Genera y muestra una visualización de un grafo y, opcionalmente, una ruta específica dentro de ese grafo.
+    
+    Utiliza la biblioteca pyvis para crear un grafo interactivo visualizado en un archivo HTML.
+    
+    Parámetros:
+    - adjacency_list: El diccionario de adyacencia que representa el grafo.
+    - path: Una lista opcional de nodos que representa una ruta para resaltar en el grafo.
+    '''
     net = Network(notebook=True, height="750px", width="100%", cdn_resources='in_line')
     
-    # Agrega los nodos al grafo
+    # Añadir nodos y aristas al grafo interactivo
     for node in adjacency_list.keys():
         net.add_node(node, label=node, title=node)
-
-    # Agrega las aristas al grafo
     for node, connections in adjacency_list.items():
         for connection, weight in connections:
             net.add_edge(node, connection, label=str(weight), title=str(weight))
 
-    # Resalta los nodos y aristas en la ruta
+    # Resaltar la ruta específica, si se proporciona
     if path:
-        for node in path:
-            net.get_node(node)["color"] = "green"
         for i in range(len(path) - 1):
-            from_node = path[i]
-            to_node = path[i + 1]
-            for edge in net.edges:
-                if edge["from"] == from_node and edge["to"] == to_node or edge["from"] == to_node and edge["to"] == from_node:
-                    edge["color"] = "red"
-                    break
+            # Resaltar nodos y aristas de la ruta en rojo
+            from_node, to_node = path[i], path[i + 1]
+            net.get_node(from_node)["color"] = "green"
+            net.get_edge(from_node, to_node)["color"] = "red"
 
-    # Genera y muestra el grafo
-    net.show("graph.html")
+    net.show("graph.html")  # Mostrar el grafo en un archivo HTML
 
-
-def show_next_and_possible_moves(adjacency_list: dict, origin: str):
-    """
-    Muestra el siguiente movimiento recomendado y los movimientos posibles desde la ciudad de origen.
-    
-    :param adjacency_list: El diccionario de adyacencia que representa el grafo.
-    :param origin: La ciudad de origen desde donde se calculan los movimientos.
-    """
-    if origin in adjacency_list:
-        possible_moves = adjacency_list[origin]
-        print(f"Desde {origin}, los movimientos posibles son:")
-        for move in possible_moves:
-            destination, distance = move
-            print(f"  - A {destination} con una distancia de {distance} km")
-    else:
-        print(f"No se encontraron movimientos posibles desde {origin}.")
-
-
-def user_decide_next_move(adjacency_list: dict, origin: str, destination: str, optimal_path):
-    """
-    Permite al usuario decidir el siguiente destino de los movimientos posibles. Si el usuario elige el movimiento
-    correcto según la ruta óptima, no se recalcula la ruta. De lo contrario, se muestra la ruta recalculada hacia
-    el destino final y el siguiente movimiento recomendado.
-    
-    :param adjacency_list: El diccionario de adyacencia que representa el grafo.
-    :param origin: La ciudad de origen desde donde se calculan los movimientos.
-    :param destination: El destino final deseado.
-    :param optimal_path: La ruta óptima previamente calculada desde el origen hasta el destino.
-    """
-    current_origin = origin
-    current_path_index = 0  # Índice del origen actual en la ruta óptima
-
-    while current_origin != destination:
-        if current_origin in adjacency_list:
-            possible_moves = adjacency_list[current_origin]
-            print(f"\nTu siguiente movimiento debería ser: {optimal_path[current_path_index + 1]}")
-            print(f"\nDesde {current_origin}, los movimientos posibles son:")
-            for i, move in enumerate(possible_moves, start=1):
-                next_destination, distance = move
-                print(f"{i}. A {next_destination} con una distancia de {distance} km")
-
-            choice = int(input("Elige tu próximo destino (número): ")) - 1
-            if 0 <= choice < len(possible_moves):
-                next_destination, _ = possible_moves[choice]
-                print(f"\nHas elegido ir a {next_destination}.")
-
-                # Verificar si la elección coincide con el próximo paso en la ruta óptima
-                if next_destination == optimal_path[current_path_index + 1]:
-                    print("Has elegido el movimiento correcto según la ruta óptima.")
-                    current_origin = next_destination
-                    current_path_index += 1
-                    if current_origin == destination:
-                        print("Has llegado a tu destino final.")
-                        return
-                    continue
-                
-                # Recalcular la ruta si la elección no es el próximo paso en la ruta óptima
-                new_path = uniform_cost_search(adjacency_list, next_destination, destination)
-                if new_path:
-                    print("Ruta recalculada hacia el destino final:", " -> ".join(new_path))
-                    plot_graph(adjacency_list, path=new_path)
-                    optimal_path = new_path  # Actualizar la ruta óptima con la nueva ruta
-                    current_path_index = 0  # Resetear el índice de la ruta óptima
-                else:
-                    print("No se pudo encontrar una ruta desde tu ubicación actual hasta el destino final.")
-                    return
-                current_origin = next_destination
-            else:
-                print("Opción no válida, intenta de nuevo.")
-        else:
-            print(f"No se encontraron movimientos posibles desde {current_origin}.")
-            return
+# Las funciones `show_next_and_possible_moves` y `user_decide_next_move` facilitan la interacción con el usuario,
+# permitiendo explorar el grafo y decidir movimientos siguiendo o desviándose de una ruta óptima precalculada.
 
 def main():
-    os.system('cls' if os.name == 'nt' else 'clear')
-    origin = str(input("Escribe la ciudad origen: "))
-    destination = str(input("Escribe la ciudad destino: "))
+    '''
+    Función principal que coordina la ejecución del programa.
     
+    Solicita al usuario ingresar los nodos de origen y destino, lee el archivo de definición del grafo,
+    calcula y muestra la ruta óptima, y permite al usuario navegar por el grafo interactuando con él.
+    '''
+    # Limpieza de la consola para una mejor visualización
+    os.system('cls' if os.name == 'nt' else 'clear')
+    
+    # Solicitud de entrada del usuario
+    origin = input("Escribe la ciudad origen: ")
+    destination = input("Escribe la ciudad destino: ")
+    
+    # Lectura del grafo desde un archivo y cálculo de la ruta óptima
     filename = "inputs/espanya.txt"
     adjacency_list = read_file(filename)
-    
-    print("Calculando la ruta óptima...")
     optimal_path = uniform_cost_search(adjacency_list, origin, destination)
+    
+    # Visualización de la ruta óptima y navegación interactiva
     if optimal_path:
         print(f"La ruta óptima teórica desde {origin} hasta {destination} es: {' -> '.join(optimal_path)}")
         plot_graph(adjacency_list, path=optimal_path)
+        user_decide_next_move(adjacency_list, origin, destination, optimal_path)
     else:
         print("No se encontró una ruta óptima.")
-        return
-
-    user_decide_next_move(adjacency_list, origin, destination, optimal_path)
-
+        
 if __name__ == '__main__':
     main()
