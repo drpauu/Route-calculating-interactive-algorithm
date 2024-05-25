@@ -1,0 +1,11 @@
+Barcelona Tarragona 105
+Barcelona Lleida 152
+Barcelona Girona 98
+Tarragona Lleida 145
+Tarragona Girona 195
+Lleida Girona 171
+Girona Figueres 43
+Girona Olot 43
+Lleida Vielha_e_Mijaran 167
+Tarragona Reus 11
+END OF INPUT

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Mapa con Ruta y Instrucciones</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.css" rel="stylesheet">
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        #instructions { position: absolute; top: 10px; right: 10px; background: white; padding: 10px; z-index: 100; }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+    mapboxgl.accessToken = 'pk.eyJ1IjoiYWpidiIsImEiOiJjbHdmNTRscnoxbGgxMmlwYThqZDJmNmo2In0.Fxyr0FGk196DaN6v7Z71Zg';
+    const map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/streets-v11',
+        center: [1.7205152192349458, 41.22156740110668], // Coordenadas del centro del mapa
+        zoom: 12 // Nivel de zoom inicial
+    });
+
+    // Añadir una capa de ruta a partir de la geometría de la ruta
+    const rutaGeoJSON = {
+        "type": "Feature",
+        "properties": {},
+        "geometry": {
+            "type": "LineString",
+            "coordinates": [[1.7205152192349458, 41.22156740110668], [1.7199912, 41.2214475], [1.7210061, 41.2218177], [1.7210887, 41.2218479], [1.7211581, 41.2218647], [1.7214531, 41.221968], [1.7217058, 41.222057], [1.721803, 41.2220901], [1.7218794, 41.2221178], [1.7223181, 41.2222705], [1.7226334, 41.2223802], [1.7229056, 41.22247], [1.7229535, 41.2224834], [1.7230032, 41.2224846], [1.7230121, 41.2224714], [1.7230187, 41.2224616], [1.7231699, 41.2222251], [1.7232435, 41.2221099], [1.7233641, 41.2219155], [1.7234065, 41.2218511], [1.7237316, 41.2213251], [1.7237557, 41.2212913], [1.7238098, 41.2212036], [1.7238532, 41.2211358], [1.7240684, 41.2207793], [1.7241372, 41.220678], [1.7242778, 41.2204548], [1.7243059, 41.2204095], [1.7243263, 41.2203745], [1.7243532, 41.220324], [1.7244679, 41.2203557], [1.7245283, 41.2203744], [1.7250374, 41.2205282], [1.7256408, 41.2207041], [1.7256862, 41.2207154], [1.7257779, 41.2207456], [1.7258702, 41.2207737], [1.7263344, 41.220912], [1.7265209, 41.2209646], [1.7266116, 41.2209903], [1.7266215, 41.2209931], [1.7267064, 41.221019], [1.7268176, 41.2210543], [1.7271548, 41.2211513], [1.7276401, 41.2213012], [1.7276732, 41.2213095], [1.7277914, 41.2213441], [1.7279073, 41.2213812], [1.7279503, 41.2213932], [1.7282019, 41.2214671], [1.7282918, 41.2214931], [1.7284173, 41.2215307], [1.7287005, 41.2216148], [1.7287346, 41.2216255], [1.7288617, 41.2216628], [1.7288503, 41.2217129], [1.7288381, 41.2217364], [1.7285219, 41.2225084], [1.7285112, 41.2225374], [1.7284882, 41.2225955], [1.7284829, 41.2226931], [1.7284794, 41.2229866], [1.7284579, 41.2233584], [1.7289746586123647, 41.223381485811444]]
+        }
+    };
+
+    map.on('load', function () {
+        // Añadir la ruta
+        map.addLayer({
+            "id": "ruta",
+            "type": "line",
+            "source": {
+                "type": "geojson",
+                "data": rutaGeoJSON
+            },
+            "layout": {
+                "line-join": "round",
+                "line-cap": "round"
+            },
+            "paint": {
+                "line-color": "#ff0000",
+                "line-width": 5
+            }
+        });
+
+        // Añadir marca de inicio
+        new mapboxgl.Marker({ color: 'green' })
+            .setLngLat([1.7205152192349458, 41.22156740110668])
+            .addTo(map);
+
+        // Añadir marca de fin
+        new mapboxgl.Marker({ color: 'red' })
+            .setLngLat([1.7289746586123647, 41.223381485811444])
+            .addTo(map);
+    });
+</script>
+</body>
+</html>
